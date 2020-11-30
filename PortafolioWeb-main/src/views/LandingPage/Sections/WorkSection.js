@@ -47,6 +47,7 @@ class WorkSection extends React.Component {
       region: '',
       commune: '',
       province: '',
+      hourFrom: '',
       dateFrom: '',
       dateUntil: '',
       advancePayment: 0,
@@ -177,44 +178,106 @@ class WorkSection extends React.Component {
   saveBooking() {
     let endpoint = `${URL}reserva`;
 
-    let json = {
-      "horaLlegada": this.state.dateFrom,
-      "total": Number.parseInt(this.state.total),
-      "idCliente": Number.parseInt(this.state.total),
-      "idDepartamento": Number.parseInt(this.state.total),
-      "fechaInicio": this.state.dateFrom,
-      "fechaTermino": this.state.dateUntil,
-      "acompaniantes": Number.parseInt(this.state.total),
-      "adelanto": Number.parseInt(this.state.total)
-    }
+    let json = `{
+      "horaLlegada": "${this.state.hourFrom.toString()}",
+      "total": ${Number.parseInt(this.state.total)},
+      "idCliente": ${Number.parseInt(this.state.total)},
+      "idDepartamento": ${Number.parseInt(this.state.department.id_departamento)},
+      "fechaInicio": "${this.state.dateFrom.toString()}",
+      "fechaTermino": "${this.state.dateUntil.toString()}",
+      "acompaniantes": ${Number.parseInt(this.state.numberGuests)},
+      "adelanto": ${Number.parseInt(this.state.advancePayment)}
+    }`
 
-    fetch(endpoint, {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.parse(json)})
+    json = JSON.stringify(json);
+
+    console.log(json);
+
+    json = JSON.parse(json);
+
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json })
       .then(res => res.json())
       .then(data => console.log(data))
       .catch(err => console.log('Erro en POST BOOKING:: ', err));
   }
 
+  saveClient() {
+    let endpoint = `${URL}cliente`;
+
+    let pNombre, sNombre, pApellido, sApellido;
+
+    if (this.state.names.includes(' ')) {
+      pNombre = this.state.names.slice(0, this.state.names.indexOf(' '));
+      sNombre = this.state.names.slice(this.state.names.indexOf(' '), this.state.names.length);
+      pNombre = pNombre.replace(' ', '');
+      sNombre = sNombre.replace(' ', '');
+    } else {
+      console.log('AQUI');
+      pNombre = this.state.names.slice(0, this.state.names.length);
+      pNombre = pNombre.replace(' ', '');
+    }
+
+    if (this.state.surnames.includes(' ')) {
+      pApellido = this.state.surnames.slice(0, this.state.surnames.indexOf(' '));
+      sApellido = this.state.surnames.slice(this.state.surnames.indexOf(' '), this.state.surnames.length);
+      pApellido = pApellido.replace(' ', '');
+      sApellido = sApellido.replace(' ', '');
+    } else {
+      pApellido = this.state.surnames.slice(0, this.state.surnames.length);      
+      pApellido = pApellido.replace(' ', '');
+
+    }
+
+    let json = `{
+      "rut": "${this.state.rut.toString()}",
+      "pNombre": "${pNombre}",
+      "sNombre": "${sNombre || ''}" ,
+      "pApellido": "${pApellido}",
+      "sApellido": "${sApellido || ''}",
+      "email": "${this.state.email.toString()}",
+      "telefono": ${Number.parseInt(this.state.phone)}
+    }`
+
+    json = JSON.stringify(json);
+
+    console.log(json);
+
+    json = JSON.parse(json);
+
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json })
+      .then(res => res.json())
+      .then(data => console.log(data))
+      .catch(err => console.log('Erro en POST CLIENTE: ', err));
+  }
+
   handleNamesChange(e) {
     this.setState({ names: e.target.value });
   };
+
   handleRutChange(e) {
     this.setState({ rut: e.target.value });
   };
+
   handleSurnamesChange(e) {
     this.setState({ surnames: e.target.value });
   };
+
   handleAdvancePaymentChange(e) {
     this.setState({ advancePayment: e.target.value });
   };
+
   handleEmailChange(e) {
     this.setState({ email: e.target.value });
   };
+
   handleNumberGuestsChange(e) {
     this.setState({ numberGuests: e.target.value });
   };
+
   handlePhoneChange(e) {
     this.setState({ phone: e.target.value });
   };
+
   handleDepartmentChange(e) {
     console.log(e.target.value);
     this.setState({ department: e.target.value }, () => {
@@ -222,26 +285,33 @@ class WorkSection extends React.Component {
       this.getExtraServicesByIdDepartment(this.state.department.id_departamento);
     });
   }
+
   handleRegionChange(e) {
     this.setState({ region: e.target.value, communes: [], provinceDisabled: false, communeDisabled: true }, () => {
       this.getProvinces(this.state.region);
     });
   }
+
   handleProvinceChange(e) {
     this.setState({ province: e.target.value, communeDisabled: false }, () => {
       this.getCommunes(this.state.province);
     });
   }
+
   handleCommuneChange(e) {
     this.setState({ commune: e.target.value });
   }
+  
   handleDateFromChange(e) {
     console.log(e._d);
     let date = new Date(e._d);
+    let hour = `${date.getHours()}:${date.getMinutes()}`;
+
     let formatDate = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-    this.setState({ dateFrom: formatDate })
+    this.setState({ dateFrom: formatDate, hourFrom: hour });
   }
+
   handleDateUntilChange(e) {
     console.log(e._d);
     let date = new Date(e._d);
@@ -249,15 +319,19 @@ class WorkSection extends React.Component {
 
     let totalDays = 0;
 
-    // let fecha1 = moment(this.state.dateFrom);
-    // let fecha2 = moment(formatDate);
+    let fecha1 = moment(this.state.dateFrom);
+    let fecha2 = moment(formatDate);
 
-    // console.log(fecha1);
-    // console.log(fecha2);
+    console.log(fecha1);
+    console.log(fecha2);
 
-    // console.log(fecha2.diff(fecha1, 'days'), 'dias de hospedaje');
+    console.log(fecha2.diff(fecha1, 'days'));
 
-    this.setState({ dateUntil: formatDate })
+    totalDays = fecha2.diff(fecha1, 'days');
+
+    totalDays = totalDays == 0 ? 1 : totalDays;
+
+    this.setState({ dateUntil: formatDate, daysLodging: totalDays, total: this.state.total * totalDays });
   }
 
   //Validar Formulario  
@@ -281,67 +355,67 @@ class WorkSection extends React.Component {
 
     console.log(this.state);
 
-    if(department.id_departamento !== null || department.id_departamento !== '') {
+    if (department.id_departamento !== null || department.id_departamento !== '') {
       this.setState({ mDepartment: '' });
     } else {
       valid = false;
     }
 
-    if(names !== null || names !== '') {
+    if (names !== null || names !== '') {
       this.setState({ mNames: '' });
     } else {
       valid = false;
     }
 
-    if(surnames !== null || surnames !== '') {
+    if (surnames !== null || surnames !== '') {
       this.setState({ mSurnames: '' });
     } else {
       valid = false;
     }
 
-    if(email !== null || email !== '') {
+    if (email !== null || email !== '') {
       this.setState({ mEmail: '' });
     } else {
       valid = false;
     }
 
-    if(phone !== null || phone !== '') {
+    if (phone !== null || phone !== '') {
       this.setState({ mPhone: '' });
     } else {
       valid = false;
     }
 
-    if(rut !== null || surnames !== '') {
+    if (rut !== null || surnames !== '') {
       this.setState({ mRut: '' });
     } else {
       valid = false;
     }
 
-    if(region !== null || region !== '') {
+    if (region !== null || region !== '') {
       this.setState({ mRegion: '' });
     } else {
       valid = false;
     }
 
-    if(province !== null || province !== '') {
+    if (province !== null || province !== '') {
       this.setState({ mProvince: '' });
     } else {
       valid = false;
     }
 
-    if(commune !== null || commune !== '') {
+    if (commune !== null || commune !== '') {
       this.setState({ mCommune: '' });
     } else {
       valid = false;
     }
 
-    if(dateFrom !== null || dateFrom !== '') {
+    if (dateFrom !== null || dateFrom !== '') {
       this.setState({ mDateForm: '' });
     } else {
       valid = false;
     }
 
-    if(dateUntil !== null || dateUntil !== '') {
+    if (dateUntil !== null || dateUntil !== '') {
       this.setState({ mDateUntil: '' });
     } else {
       valid = false;
@@ -571,7 +645,9 @@ class WorkSection extends React.Component {
                   <Fab onClick={(e) => {
                     e.preventDefault();
                     console.log(this.state);
-                    this.validation();
+                    //this.saveBooking();
+                    this.saveClient();
+                    //this.validation();
                   }} variant="extended">
                     <NavigationIcon style={{ marginRight: 'theme.spacing(1)' }} />
                     Reservar
