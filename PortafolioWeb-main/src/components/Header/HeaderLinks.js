@@ -66,6 +66,7 @@ export default function HeaderLinks(props) {
       .then(res => res.json())
       .then(data => {
         console.log(data);
+        data.rowsAffected == 1 ? alert('Reserva Cancelada') : alert('No Existe reserva con ese ID')
       })
       .catch(err => {
         console.log('Hubo un error en cancelBooking: ', err);

@@ -62,6 +62,76 @@ const rows = [
   { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
 ];
 
+// class LandingPage extends React.Component() {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       nextTodoId: 0,
+//       nextTodoLabel: "",
+//       departmentData: "",
+//       openDialog: false
+//     }
+//   }
+
+
+//   handleData = (data) => {
+//     console.log(data);
+//     setDepartmentData('dataFromParent');
+//     console.log(departmentData);
+//   }
+
+//   render() {
+//     return (
+//       <Fragment>
+
+//         <div>
+//           <Header
+//             color="transparent"
+//             routes={dashboardRoutes}
+//             brand="Turismo Real"
+//             rightLinks={<HeaderLinks />}
+//             fixed
+//             changeColorOnScroll={{
+//               height: 400,
+//               color: "white"
+//             }}
+//             {...rest}
+//           />
+//           <Parallax filter image={require("assets/img/landing-bg.jpg")}>
+//             <div className={classes.container}>
+//               <GridContainer>
+//                 <GridItem xs={12} sm={12} md={6}>
+//                   <h1 className={classes.title}>Tu Viaje lo Empezamos Juntos.</h1>
+//                   <h4>
+//                     Realiza tu reservas de nuestros departamentos en cualquier
+//                     lugar de Chile, de forma Rapida, Simple y Eficaz.
+//                 </h4>
+//                   <br />
+//                   <div style={{ width: 5000 + 'px' }}>
+//                     <DepartamentosComponent deparmentData={handleData} />
+//                   </div>
+//                   <br />
+//                   <br />
+//                 </GridItem>
+//                 <GridItem >
+//                 </GridItem>
+//               </GridContainer>
+//             </div>
+//           </Parallax>
+//           <div id='xdd' className={classNames(classes.main, classes.mainRaised)} style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
+//             <div className={classes.container} id="worksection">
+//               <WorkSection departmentData={departmentData} />
+//             </div>
+//           </div>
+//           <Footer />
+//         </div>
+//       </Fragment>
+//     );
+//   }
+// }
+
+const URL = 'http://localhost:3300/';
+
 export default function LandingPage(props) {
 
   //States
@@ -69,6 +139,7 @@ export default function LandingPage(props) {
   const [newTodoLabel, setNewTodoLabel] = useState("");
 
   const [departmentData, setDepartmentData] = useState("");
+  const [extraServicesDepartment, setExtraServicesDepartment] = useState("");
 
   const [openDialog, setOpenDialog] = React.useState(false);
 
@@ -80,9 +151,26 @@ export default function LandingPage(props) {
     console.log('xdd');
   }, []);
 
-  const handleData = (data)=>{    
-    console.log(data);
-    setDepartmentData(data);
+  let handleData = (departamento) => {    
+    console.log(departamento);
+    getExtraServicesByIdDepartment(departamento.department.id_departamento, departamento);
+    console.log(departmentData);
+  }
+
+  let getExtraServicesByIdDepartment = (idDepartment, departamento) => {
+    let endpoint = `${URL}serviciosextras`
+
+    let json = JSON.stringify(`{"id": ${idDepartment}}`);
+    console.log(json);
+    console.log(endpoint);
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.parse(json) })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data);
+        setDepartmentData(departamento);
+        setExtraServicesDepartment(data);
+        //this.setState({ extraServicesList: data });
+      })
   }
 
   return (
@@ -124,7 +212,7 @@ export default function LandingPage(props) {
         </Parallax>
         <div id='xdd' className={classNames(classes.main, classes.mainRaised)} style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
           <div className={classes.container} id="worksection">
-            <WorkSection departmentData={setDepartmentData} />
+            <WorkSection departmentData={departmentData} extraServicesDepartment={extraServicesDepartment} />
           </div>
         </div>
         <Footer />

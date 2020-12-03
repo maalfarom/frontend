@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
@@ -50,6 +50,8 @@ class WorkSection extends React.Component {
       hourFrom: '',
       dateFrom: '',
       dateUntil: '',
+      rDateFrom: '',
+      rDateUntil: '',
       advancePayment: 0,
       numberGuests: 0,
       total: 0,
@@ -69,13 +71,14 @@ class WorkSection extends React.Component {
       mNumberGuests: 0,
       mTotal: 0,
 
-      departamentoElegido: props.deparmentData,
+      departamentoElegido: props.departmentData,
 
       provinceDisabled: true,
       communeDisabled: true
     }
 
     console.log(props.departmentData);
+    console.log(this.state.department);
 
     this.handleNamesChange = this.handleNamesChange.bind(this);
     this.handleSurnamesChange = this.handleSurnamesChange.bind(this);
@@ -175,16 +178,16 @@ class WorkSection extends React.Component {
       })
   }
 
-  saveBooking() {
+  saveBooking(idCliente) {
     let endpoint = `${URL}reserva`;
 
     let json = `{
       "horaLlegada": "${this.state.hourFrom.toString()}",
       "total": ${Number.parseInt(this.state.total)},
-      "idCliente": ${Number.parseInt(this.state.total)},
-      "idDepartamento": ${Number.parseInt(this.state.department.id_departamento)},
-      "fechaInicio": "${this.state.dateFrom.toString()}",
-      "fechaTermino": "${this.state.dateUntil.toString()}",
+      "idCliente": ${Number.parseInt(idCliente)},
+      "idDepartamento": ${Number.parseInt(this.props.departmentData.department.id_departamento)},
+      "fechaInicio": "${this.state.rDateFrom.toString()}",
+      "fechaTermino": "${this.state.rDateUntil.toString()}",
       "acompaniantes": ${Number.parseInt(this.state.numberGuests)},
       "adelanto": ${Number.parseInt(this.state.advancePayment)}
     }`
@@ -223,7 +226,7 @@ class WorkSection extends React.Component {
       pApellido = pApellido.replace(' ', '');
       sApellido = sApellido.replace(' ', '');
     } else {
-      pApellido = this.state.surnames.slice(0, this.state.surnames.length);      
+      pApellido = this.state.surnames.slice(0, this.state.surnames.length);
       pApellido = pApellido.replace(' ', '');
 
     }
@@ -246,7 +249,12 @@ class WorkSection extends React.Component {
 
     fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json })
       .then(res => res.json())
-      .then(data => console.log(data))
+      .then(data => {
+        console.log(data)
+        if(data.ok) {
+          this.saveBooking(data.id);
+        }
+      })
       .catch(err => console.log('Erro en POST CLIENTE: ', err));
   }
 
@@ -282,7 +290,7 @@ class WorkSection extends React.Component {
     console.log(e.target.value);
     this.setState({ department: e.target.value }, () => {
       this.setState({ total: this.state.department.tarifa });
-      this.getExtraServicesByIdDepartment(this.state.department.id_departamento);
+      this.getExtraServicesByIdDepartment(this.state.department);
     });
   }
 
@@ -301,7 +309,7 @@ class WorkSection extends React.Component {
   handleCommuneChange(e) {
     this.setState({ commune: e.target.value });
   }
-  
+
   handleDateFromChange(e) {
     console.log(e._d);
     let date = new Date(e._d);
@@ -309,7 +317,9 @@ class WorkSection extends React.Component {
 
     let formatDate = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-    this.setState({ dateFrom: formatDate, hourFrom: hour });
+    this.setState({ dateFrom: formatDate, hourFrom: hour, rDateFrom: `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear().toString().substring(2)}` }, () => {
+      console.log(this.state.dateFrom);
+    });
   }
 
   handleDateUntilChange(e) {
@@ -331,7 +341,10 @@ class WorkSection extends React.Component {
 
     totalDays = totalDays == 0 ? 1 : totalDays;
 
-    this.setState({ dateUntil: formatDate, daysLodging: totalDays, total: this.state.total * totalDays });
+    console.log(this.props.departmentData.department.tarifa);
+    console.log('totaldays:'+totalDays);
+
+    this.setState({ dateUntil: formatDate, daysLodging: totalDays, total: this.props.departmentData.department.tarifa * totalDays, rDateUntil: `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear().toString().substring(2)}` });
   }
 
   //Validar Formulario  
@@ -342,84 +355,61 @@ class WorkSection extends React.Component {
       email,
       phone,
       rut,
-      region,
-      commune,
-      province,
       dateFrom,
       dateUntil,
       advancePayment,
-      numberGuests,
-      total } = this.state;
+      numberGuests
+      } = this.state;
 
     let valid = true;
 
     console.log(this.state);
 
-    if (department.id_departamento !== null || department.id_departamento !== '') {
-      this.setState({ mDepartment: '' });
-    } else {
-      valid = false;
-    }
-
-    if (names !== null || names !== '') {
+    if (names !== null && names !== '') {
       this.setState({ mNames: '' });
     } else {
       valid = false;
     }
 
-    if (surnames !== null || surnames !== '') {
+    if (surnames !== null && surnames !== '') {
       this.setState({ mSurnames: '' });
     } else {
       valid = false;
     }
 
-    if (email !== null || email !== '') {
+    if (email !== null && email !== '') {
       this.setState({ mEmail: '' });
     } else {
       valid = false;
     }
 
-    if (phone !== null || phone !== '') {
+    if (phone !== null && phone !== '') {
       this.setState({ mPhone: '' });
     } else {
       valid = false;
     }
 
-    if (rut !== null || surnames !== '') {
+    if (rut !== null && surnames !== '') {
       this.setState({ mRut: '' });
     } else {
       valid = false;
     }
 
-    if (region !== null || region !== '') {
-      this.setState({ mRegion: '' });
-    } else {
-      valid = false;
-    }
-
-    if (province !== null || province !== '') {
-      this.setState({ mProvince: '' });
-    } else {
-      valid = false;
-    }
-
-    if (commune !== null || commune !== '') {
-      this.setState({ mCommune: '' });
-    } else {
-      valid = false;
-    }
-
-    if (dateFrom !== null || dateFrom !== '') {
+    if (dateFrom !== null && dateFrom !== '') {
       this.setState({ mDateForm: '' });
     } else {
       valid = false;
     }
 
-    if (dateUntil !== null || dateUntil !== '') {
+    if (dateUntil !== null && dateUntil !== '') {
       this.setState({ mDateUntil: '' });
     } else {
       valid = false;
     }
+
+    if(!valid){alert("Formulario Invalido, revise los campos")}
+
+    console.log(valid);
 
     return valid;
   }
@@ -427,113 +417,117 @@ class WorkSection extends React.Component {
 
   render() {
     return (
-      <div style={{ padding: 70 + 'px 0' }}>
-        <div style={{ color: "black" }}>AKJSKAJSK{this.state.departamentoElegido}</div>
-        <GridContainer justify="center">
-          <GridItem cs={12} sm={12} md={8}>
-            <h2 style={{ color: 'black', textAlign: 'center' }}>Reservemos</h2>
-            <hr />
-            <br />
-            <h4 style={{ color: 'gray', textAlign: 'center' }}>
-              Realiza tu reserva
-          </h4>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              console.log('OLAAAAAAAAAA');
-            }}>
-              <GridContainer>
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="Nombres" onChange={this.handleNamesChange} />
-                </GridItem>
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="Apellidos" onChange={this.handleSurnamesChange} />
-                </GridItem>
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="RUT" onChange={this.handleRutChange} />
-                </GridItem>
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="Telefono" onChange={this.handlePhoneChange} />
-                </GridItem>
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="Correo" onChange={this.handleEmailChange} />
-                  <br />
-                  <br />
-                </GridItem>
-                <GridItem>
-                  <InputLabel style={{
-                    cursor: "pointer",
-                    paddingLeft: "0",
-                    color: "rgba(0, 0, 0, 0.26)",
-                    fontSize: "14px",
-                    lineHeight: "1.428571429",
-                    fontWeight: "400",
-                    display: "inline-flex",
+      <Fragment>
+        {this.props.departmentData ? (
+          <div style={{ padding: 70 + 'px 0' }}>
+            <div style={{ color: "black" }}>{JSON.stringify(this.props.departmentData)}</div>
+            <GridContainer justify="center">
+              <GridItem cs={12} sm={12} md={8}>
+                <h2 style={{ color: 'black', textAlign: 'center' }}>Reservemos</h2>
+                <hr />
+                <br />
+                <h4 style={{ color: 'gray', textAlign: 'center' }}>
+                  Realiza tu reserva
+              </h4>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  console.log('OLAAAAAAAAAA');
+                }}>
+                  <GridContainer>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="Nombres" onChange={this.handleNamesChange} />
+                    </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="Apellidos" onChange={this.handleSurnamesChange} />
+                    </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="RUT" onChange={this.handleRutChange} />
+                    </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="Telefono" onChange={this.handlePhoneChange} />
+                    </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="Correo" onChange={this.handleEmailChange} />
+                      <br />
+                      <br />
+                    </GridItem>
+                    <GridItem>
+                      <InputLabel style={{
+                        cursor: "pointer",
+                        paddingLeft: "0",
+                        color: "rgba(0, 0, 0, 0.26)",
+                        fontSize: "14px",
+                        lineHeight: "1.428571429",
+                        fontWeight: "400",
+                        display: "inline-flex",
 
-                  }}>
-                    Fecha y Hora Llegada
+                      }}>
+                        Fecha y Hora Llegada
                   </InputLabel>
-                  <br />
-                  <FormControl fullWidth>
-                    <Datetime
-                      styles={{ color: 'black' }}
-                      inputProps={{ placeholder: "Selecciona Fecha y Hora" }}
-                      onChange={this.handleDateFromChange}
-                    />
-                  </FormControl>
-                  <br />
-                  <br />
-                </GridItem>
-                <GridItem>
-                  <InputLabel style={{
-                    cursor: "pointer",
-                    paddingLeft: "0",
-                    color: "rgba(0, 0, 0, 0.26)",
-                    fontSize: "14px",
-                    lineHeight: "1.428571429",
-                    fontWeight: "400",
-                    display: "inline-flex"
-                  }}>
-                    Fecha y Hora Salida
+                      <br />
+                      <FormControl fullWidth>
+                        <Datetime
+                          closeOnSelect={true}
+                          styles={{ color: 'black' }}
+                          inputProps={{ placeholder: "Selecciona Fecha y Hora" }}
+                          onChange={this.handleDateFromChange}
+                        />
+                      </FormControl>
+                      <br />
+                      <br />
+                    </GridItem>
+                    <GridItem>
+                      <InputLabel style={{
+                        cursor: "pointer",
+                        paddingLeft: "0",
+                        color: "rgba(0, 0, 0, 0.26)",
+                        fontSize: "14px",
+                        lineHeight: "1.428571429",
+                        fontWeight: "400",
+                        display: "inline-flex"
+                      }}>
+                        Fecha y Hora Salida
                 </InputLabel>
-                  <br />
-                  <FormControl fullWidth>
-                    <Datetime
-                      styles={{ color: 'black' }}
-                      inputProps={{ placeholder: "Selecciona Fecha y Hora" }}
-                      onChange={this.handleDateUntilChange}
-                    />
-                  </FormControl>
-                  <br />
-                  <br />
-                </GridItem>
-                <GridItem>
-                  <FormControl style={{ margin: 1, minWidth: 120 }}>
+                      <br />
+                      <FormControl fullWidth>
+                        <Datetime
+                          closeOnSelect={true}
+                          styles={{ color: 'black' }}
+                          inputProps={{ placeholder: "Selecciona Fecha y Hora" }}
+                          onChange={this.handleDateUntilChange}
+                        />
+                      </FormControl>
+                      <br />
+                      <br />
+                    </GridItem>
+                    <GridItem>
+                      {/* <FormControl style={{ margin: 1, minWidth: 120 }}>
                     <InputLabel htmlFor="age-native-helper">Departamentos</InputLabel>
-                    <Select onChange={this.handleDepartmentChange} ref="departmentBox">
+                    <Select onChange={this.handleDepartmentChange} ref="departmentBox" value={this.props.departmentData ? this.props.departmentData.department.id_departamento : ''}>
                       <MenuItem value="">
                         <em>None</em>
                       </MenuItem>
                       {this.state.departmentsList.map(department => (
-                        <MenuItem value={department}>{department.nombre_departamento}</MenuItem>
+                        <MenuItem value={department.id_departamento}>{department.nombre_departamento}</MenuItem>
                       ))}
                     </Select>
                     <FormHelperText>Selecciona Departamento o Busca mas abajo</FormHelperText>
-                  </FormControl>
-                  <label>Precio por Noche: ${this.state.department.tarifa}</label>
-                  <br />
-                  <label>Dirección: {this.state.department.direccion}</label>
-                </GridItem>
+                  </FormControl> */}
+                      <label>Departamento: {this.props.departmentData ? JSON.stringify(this.props.departmentData.department.nombre_departamento) : this.state.department}</label> <br />
+                      <label>Dirección: {this.props.departmentData ? JSON.stringify(this.props.departmentData.department.direccion) : this.state.department.direccion}</label> <br />
+                      <label>Precio por Noche: ${this.props.departmentData ? JSON.stringify(this.props.departmentData.department.tarifa) : this.state.department.direccion}</label> <br />
+                    </GridItem>
 
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="Cantidad Alojados" onChange={this.handleNumberGuestsChange} />
-                </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="Cantidad Alojados" onChange={this.handleNumberGuestsChange} />
+                    </GridItem>
 
-                <GridItem xs={12} sm={12} md={6}>
-                  <TextField id="standard-basic" label="$ Monto Adelanto" onChange={this.handleAdvancePaymentChange} />
-                </GridItem>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <TextField id="standard-basic" label="$ Monto Adelanto" onChange={this.handleAdvancePaymentChange} />
+                    </GridItem>
 
-                {/* BUSCAR DEPTO */}
-                <GridItem style={{ alignItems: 'center', display: 'flex', justifyContent: 'center' }}>
+                    {/* BUSCAR DEPTO */}
+                    {/* <GridItem style={{ alignItems: 'center', display: 'flex', justifyContent: 'center' }}>
                   <h4 style={{ color: '#999', textAlign: 'center' }}>O Busca Uno Para Tí</h4>
                 </GridItem>
                 <GridItem style={{ alignItems: 'center', display: 'flex', justifyContent: 'center' }}>
@@ -592,72 +586,92 @@ class WorkSection extends React.Component {
                     <NavigationIcon />
                     Buscar
                 </Fab>
-                </GridItem>
+                </GridItem> */}
 
-                <br /><br />
+                    <br /><br />
 
-                <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 30 + '%' }}>
-                  <h3 style={{ color: '#999', textAlign: 'center' }}>Servicios Extra</h3>
-                </GridItem>
+                    <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 30 + '%' }}>
+                      <h3 style={{ color: '#999', textAlign: 'center' }}>Servicios Extra</h3>
+                    </GridItem>
 
-                <GridItem>
-                  <div style={{ marginLeft: 170 }}>
-                    <List style={{
-                      width: '100%',
-                      maxWidth: 360,
-                      backgroundColor: '#ffffff',
-                    }}>
-                      {this.state.extraServicesList.map(extraService => (
-                        <ListItem style={{ color: 'black' }}>
-                          <ListItemIcon>
-                            <Checkbox edge="start"
-                              onChange={() => {
-                                console.log(extraService);
-                                if (!this.state.extraServices.includes(extraService.id_servicio)) {
-                                  this.state.extraServices.push(extraService.id_servicio);
-                                  this.setState({ total: this.state.total + extraService.precio_servicio })
-                                } else {
-                                  let indexId = this.state.extraServices.indexOf(extraService.id_servicio);
-                                  this.state.extraServices.splice(indexId, 1);
-                                  this.setState({ total: this.state.total - extraService.precio_servicio })
-                                }
-                              }}
-                              tabIndex={-1}
-                              disableRipple
-                              inputProps={{ 'aria-labelledby': extraService.id_departamento_servicio }} />
-                          </ListItemIcon>
-                          <ListItemText id={extraService.id_departamento_servicio} primary={extraService.nombre_servicio} />
-                          <ListItemSecondaryAction>
-                            <IconButton edge="end" aria-label="comments">
-                              ${extraService.precio_servicio}
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </div>
-                </GridItem>
+                    <GridItem>
+                      <div style={{ marginLeft: 170 }}>
+                        <List style={{
+                          width: '100%',
+                          maxWidth: 360,
+                          backgroundColor: '#ffffff',
+                        }}>
+                          {this.props.extraServicesDepartment ? (
+                            <Fragment>
+                              {this.props.extraServicesDepartment.map(extraService => (
+                                <ListItem style={{ color: 'black' }}>
+                                  <ListItemIcon>
+                                    <Checkbox edge="start"
+                                      onChange={() => {
+                                        console.log(extraService);
+                                        if (!this.state.extraServices.includes(extraService.id_servicio)) {
+                                          this.state.extraServices.push(extraService.id_servicio);
+                                          this.setState({ total: this.state.total + extraService.precio_servicio })
+                                        } else {
+                                          let indexId = this.state.extraServices.indexOf(extraService.id_servicio);
+                                          this.state.extraServices.splice(indexId, 1);
+                                          this.setState({ total: this.state.total - extraService.precio_servicio })
+                                        }
+                                      }}
+                                      tabIndex={-1}
+                                      disableRipple
+                                      inputProps={{ 'aria-labelledby': extraService.id_departamento_servicio }} />
+                                  </ListItemIcon>
+                                  <ListItemText id={extraService.id_departamento_servicio} primary={extraService.nombre_servicio} />
+                                  <ListItemSecondaryAction>
+                                    <IconButton edge="end" aria-label="comments">
+                                      ${extraService.precio_servicio}
+                                    </IconButton>
+                                  </ListItemSecondaryAction>
+                                </ListItem>
+                              ))}
+                          </Fragment>
+                          ) :(null)}
+                        </List>
+                      </div>
+                    </GridItem>
 
-                <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 30 + '%' }}>
-                  <h3 style={{ color: '#999', textAlign: 'center' }}>Total: ${this.state.total}</h3>
-                </GridItem>
-                <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 40 + '%' }}>
-                  <Fab onClick={(e) => {
-                    e.preventDefault();
-                    console.log(this.state);
-                    //this.saveBooking();
-                    this.saveClient();
-                    //this.validation();
-                  }} variant="extended">
-                    <NavigationIcon style={{ marginRight: 'theme.spacing(1)' }} />
+                    <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 30 + '%' }}>
+                      <h3 style={{ color: '#999', textAlign: 'center' }}>Total: ${this.state.total}</h3>
+                    </GridItem>
+                    <GridItem xs={12} sm={12} md={4} style={{ marginLeft: 40 + '%' }}>
+                      <Fab onClick={(e) => {
+                        e.preventDefault();
+                        console.log(this.state);
+                        if(this.validation()) {
+                          this.saveClient();
+                        }
+                        //this.validation();
+                      }} variant="extended">
+                        <NavigationIcon style={{ marginRight: 'theme.spacing(1)' }} />
                     Reservar
                 </Fab>
+                    </GridItem>
+                  </GridContainer>
+                </form>
+              </GridItem>
+            </GridContainer>
+          </div>
+        ) : (
+            <div style={{ padding: 70 + 'px 0' }}>
+              <GridContainer justify="center">
+                <GridItem cs={12} sm={12} md={8}>
+                  <h2 style={{ color: 'black', textAlign: 'center' }}>Reservemos</h2>
+                  <hr />
+                  <br />
+                  <h4 style={{ color: 'gray', textAlign: 'center' }}>
+                    Selecciona tu Departamento en "Reservar"
+              </h4>
                 </GridItem>
               </GridContainer>
-            </form>
-          </GridItem>
-        </GridContainer>
-      </div>
+            </div>
+          )}
+      </Fragment>
     );
   }
 }
