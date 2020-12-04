@@ -189,7 +189,8 @@ class WorkSection extends React.Component {
       "fechaInicio": "${this.state.rDateFrom.toString()}",
       "fechaTermino": "${this.state.rDateUntil.toString()}",
       "acompaniantes": ${Number.parseInt(this.state.numberGuests)},
-      "adelanto": ${Number.parseInt(this.state.advancePayment)}
+      "adelanto": ${Number.parseInt(this.state.advancePayment)},
+      "services": "[${this.state.extraServices}]"
     }`
 
     json = JSON.stringify(json);
@@ -251,7 +252,7 @@ class WorkSection extends React.Component {
       .then(res => res.json())
       .then(data => {
         console.log(data)
-        if(data.ok) {
+        if (data.ok) {
           this.saveBooking(data.id);
         }
       })
@@ -317,7 +318,7 @@ class WorkSection extends React.Component {
 
     let formatDate = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-    this.setState({ dateFrom: formatDate, hourFrom: hour, rDateFrom: `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear().toString().substring(2)}` }, () => {
+    this.setState({ dateFrom: formatDate, hourFrom: hour, rDateFrom: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear().toString().substring(2)}` }, () => {
       console.log(this.state.dateFrom);
     });
   }
@@ -342,9 +343,9 @@ class WorkSection extends React.Component {
     totalDays = totalDays == 0 ? 1 : totalDays;
 
     console.log(this.props.departmentData.department.tarifa);
-    console.log('totaldays:'+totalDays);
+    console.log('totaldays:' + totalDays);
 
-    this.setState({ dateUntil: formatDate, daysLodging: totalDays, total: this.props.departmentData.department.tarifa * totalDays, rDateUntil: `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear().toString().substring(2)}` });
+    this.setState({ dateUntil: formatDate, daysLodging: totalDays, total: this.props.departmentData.department.tarifa * totalDays, rDateUntil: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear().toString().substring(2)}` });
   }
 
   //Validar Formulario  
@@ -359,7 +360,7 @@ class WorkSection extends React.Component {
       dateUntil,
       advancePayment,
       numberGuests
-      } = this.state;
+    } = this.state;
 
     let valid = true;
 
@@ -407,7 +408,7 @@ class WorkSection extends React.Component {
       valid = false;
     }
 
-    if(!valid){alert("Formulario Invalido, revise los campos")}
+    if (!valid) { alert("Formulario Invalido, revise los campos") }
 
     console.log(valid);
 
@@ -420,7 +421,6 @@ class WorkSection extends React.Component {
       <Fragment>
         {this.props.departmentData ? (
           <div style={{ padding: 70 + 'px 0' }}>
-            <div style={{ color: "black" }}>{JSON.stringify(this.props.departmentData)}</div>
             <GridContainer justify="center">
               <GridItem cs={12} sm={12} md={8}>
                 <h2 style={{ color: 'black', textAlign: 'center' }}>Reservemos</h2>
@@ -609,13 +609,17 @@ class WorkSection extends React.Component {
                                     <Checkbox edge="start"
                                       onChange={() => {
                                         console.log(extraService);
-                                        if (!this.state.extraServices.includes(extraService.id_servicio)) {
-                                          this.state.extraServices.push(extraService.id_servicio);
-                                          this.setState({ total: this.state.total + extraService.precio_servicio })
+                                        if (!this.state.extraServices.includes(extraService.id_departamento_servicio)) {
+                                          this.state.extraServices.push(extraService.id_departamento_servicio);
+                                          this.setState({ total: this.state.total + extraService.precio_servicio }, () => {
+                                            console.log(this.state.extraServices);
+                                          })
                                         } else {
-                                          let indexId = this.state.extraServices.indexOf(extraService.id_servicio);
+                                          let indexId = this.state.extraServices.indexOf(extraService.id_departamento_servicio);
                                           this.state.extraServices.splice(indexId, 1);
-                                          this.setState({ total: this.state.total - extraService.precio_servicio })
+                                          this.setState({ total: this.state.total - extraService.precio_servicio }, () => {
+                                            console.log(this.state.extraServices);
+                                          })
                                         }
                                       }}
                                       tabIndex={-1}
@@ -630,8 +634,8 @@ class WorkSection extends React.Component {
                                   </ListItemSecondaryAction>
                                 </ListItem>
                               ))}
-                          </Fragment>
-                          ) :(null)}
+                            </Fragment>
+                          ) : (null)}
                         </List>
                       </div>
                     </GridItem>
@@ -643,7 +647,7 @@ class WorkSection extends React.Component {
                       <Fab onClick={(e) => {
                         e.preventDefault();
                         console.log(this.state);
-                        if(this.validation()) {
+                        if (this.validation()) {
                           this.saveClient();
                         }
                         //this.validation();
